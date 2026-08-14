@@ -1,7 +1,25 @@
 import os
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 import discord
 from discord.ext import commands
 
+# --- Renderのポート監視（無料Web Service化）対策 ---
+class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Bot is running!")
+
+def run_server():
+    port = int(os.environ.get("PORT", 8080))
+    server = HTTPServer(('0.0.0.0', port), SimpleHTTPRequestHandler)
+    server.serve_forever()
+
+# バックグラウンドで簡易サーバーを起動
+threading.Thread(target=run_server, daemon=True).start()
+
+# --- Discord Bot本体 ---
 intents = discord.Intents.default()
 intents.message_content = True
 
@@ -15,7 +33,5 @@ async def on_ready():
 async def ping(ctx):
     await ctx.send('Pong!')
 
-# 環境変数からトークンを取得して起動
 TOKEN = os.getenv('DISCORD_TOKEN')
 bot.run(TOKEN)
-
