@@ -4,7 +4,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 import discord
 from discord.ext import commands
 
-# --- Renderのポート監視（無料Web Service化）対策 ---
+# --- Renderのポート監視対策 ---
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -16,10 +16,12 @@ def run_server():
     server = HTTPServer(('0.0.0.0', port), SimpleHTTPRequestHandler)
     server.serve_forever()
 
-# バックグラウンドで簡易サーバーを起動
-threading.Thread(target=run_server, daemon=True).start()
+# サーバーをバックグラウンドで起動
+t = threading.Thread(target=run_server)
+t.daemon = True
+t.start()
 
-# --- Discord Bot本体 ---
+# --- Discord Bot設定 ---
 intents = discord.Intents.default()
 intents.message_content = True
 
@@ -33,5 +35,9 @@ async def on_ready():
 async def ping(ctx):
     await ctx.send('Pong!')
 
-TOKEN = os.getenv('DISCORD_TOKEN')
-bot.run(TOKEN)
+# トークン取得と起動
+TOKEN = os.environ.get('DISCORD_TOKEN')
+if TOKEN:
+    bot.run(TOKEN)
+else:
+    print("エラー: DISCORD_TOKENが設定されていません")
